@@ -1,0 +1,7 @@
+services:
+  - name: web
+    env:
+      - key: mongoURI
+        value: "mongodb+srv://zizasilatei:zizasilatei123@gallery.wc344.mongodb.net/darkroom?retryWrites=true&w=majority"
+    buildCommand: npm install
+    startCommand: npm start
