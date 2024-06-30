@@ -4,9 +4,6 @@ const mongoose = require('mongoose');
 const path = require('path');
 const config = require('./_config');
 
-// Require the _config.js file to access mongoURI configuration
-const config = require('./_config');
-
 // Define routes
 let index = require('./routes/index');
 let image = require('./routes/image');
@@ -40,16 +37,9 @@ app.use(express.json());
 app.use('/', index);
 app.use('/image', image);
 
-// Start the server only if not in test mode
-// if (process.env.NODE_ENV !== 'test') {
-//     const PORT = process.env.PORT || 5000;
-//     app.listen(PORT, () => {
-//         console.log(`Server is running on http://localhost:${PORT}`);
-//     });
-// }
-
+// Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT,() =>{
+app.listen(PORT, () => {
     console.log(`Server is listening at http://localhost:${PORT}`)
 });
 
