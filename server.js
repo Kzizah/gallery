@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
+const config = require('./_config');
 
 // Require the _config.js file to access mongoURI configuration
 const config = require('./_config');
