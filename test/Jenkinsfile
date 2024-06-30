@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+    
+    environment {
+        RENDER_APP_NAME = 'gallery' // Replace with your Render application name
+        SLACK_CHANNEL = 'Ziza_IP1' // Replace with your Slack channel
+    }
+    
+    tools {
+        nodejs "NodeJS-22.3.0"  // Use the NodeJS tool defined in Jenkins
+    }
+    
+    triggers {
+        pollSCM('H/2 * * * *') // Polls the SCM every 2 minutes
+    }
+    
+    stages {
+        stage("Clone gallery repository") {
+            steps {
+                git branch: 'master', url: 'https://github.com/Kzizah/gallery'
+            }
+        }
+        
+        stage('Install dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        
+        stage('Install mocha and chai') {
+            steps {
+                echo 'Installing other dependencies...'
+                sh 'npm install --save-dev mocha chai chai-http'
+            }
+        }
+        
+        stage('Test project') {
+            steps {
+                echo 'Running tests...'
+                sh 'npm test'
+            }
+        }
+        
+        stage('Build project') {
+            steps {
+                echo 'Building...'
+                sh 'npm run build'
+            }
+        }
+        
+        stage('Start server') {
+            steps {
+                echo 'Starting server...'
+                sh 'npm start &'
+                sleep 10 // Time for the server to start
+            }
+        }
+        
+        stage('Deploy to Render') {
+            steps {
+                script {
+                    // Use credentials binding for RENDER_API_KEY
+                    withCredentials([string(credentialsId: 'render_api_key', variable: 'RENDER_API_KEY')]) {
+                        sh "curl -X POST -H 'Authorization: Bearer \${RENDER_API_KEY}' \
+                            -H 'Content-Type: application/json' \
+                            -d '{\"branch\": \"master\", \"env\": {\"NODE_ENV\": \"production\"}}' \
+                            https://api.render.com/v1/service/${RENDER_APP_NAME}/deploy"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                echo "Sending success notification to Slack..."
+                slackSend(
+                    baseUrl: '',
+                    teamDomain: 'yourfirstnameip1talk',
+                    channel: "${SLACK_CHANNEL}",
+                    color: 'good',
+                    tokenCredentialId: 'SLACK_API_TOKEN',
+                    message: "Build succeeded: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+                )
+            }
+        }
+        failure {
+            script {
+                echo "Sending failure notification to Slack..."
+                slackSend(
+                    baseUrl: '',
+                    teamDomain: 'yourfirstnameip1talk',
+                    channel: "${SLACK_CHANNEL}",
+                    color: 'danger',
+                    tokenCredentialId: 'SLACK_API_TOKEN',
+                    message: "Build failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}"
+                )
+            }
+        }
+    }
+}
